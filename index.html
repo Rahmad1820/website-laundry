@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laundry Website</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script> <!-- Add jsPDF library -->
+    <style>
+        /* Reset CSS */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url('images/background.jpg'); /* Add your background image URL */
+            background-size: cover; /* Cover the entire page */
+            background-position: center; /* Position it in the center */
+            background-attachment: fixed; /* Keep the image fixed while scrolling */
+            color: #333;
+        }
+
+        header {
+            background: none; /* Make the header transparent */
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.7); /* Add shadow for better readability */
+        }
+
+        main {
+            padding: 1rem;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.9); /* Semi-transparent background for cards */
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin: 1rem 0;
+            padding: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.8rem; /* Increased padding for better clickability */
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem; /* Adjusted font size for better readability */
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            background-color: #007bff;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 0.5rem;
+            text-align: left;
+        }
+
+        table th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .note {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            .form-group input, .btn {
+                font-size: 0.9rem; /* Adjusted font size */
+                padding: 0.6rem;  /* Increased padding for touch screens */
+            }
+
+            table th, table td {
+                font-size: 0.8rem;
+            }
+
+            .card {
+                padding: 0.75rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .btn {
+                font-size: 0.8rem;
+                padding: 0.4rem; /* Smaller button padding for smaller screens */
+            }
+
+            table th, table td {
+                font-size: 0.7rem;
+            }
+
+            header h1 {
+                font-size: 1.2rem;
+            }
+
+            .form-group input {
+                padding: 1rem;  /* More padding for easier input */
+                font-size: 1rem; /* Consistent font size for smaller screens */
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>ARROGANZT LAUNDRY</h1>
+    </header>
+    <main>
+        <div class="card">
+            <h2>Tempat Laundry</h2>
+            <ul>
+                <li>Clean & Fresh Laundry</li>
+                <li>Speedy Wash</li>
+                <li>Wash 'n Go</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>Formulir Pemesanan</h2>
+            <div class="form-group">
+                <label for="name">Nama Pemesan:</label>
+                <input type="text" id="name" placeholder="Masukkan nama">
+            </div>
+            <div class="form-group">
+                <label for="phone">Nomor Handphone:</label>
+                <input type="text" id="phone" placeholder="Masukkan nomor handphone">
+            </div>
+            <div class="form-group">
+                <label for="address">Alamat:</label>
+                <input type="text" id="address" placeholder="Masukkan alamat">
+            </div>
+            <div class="form-group">
+                <label for="quantity">Jumlah Laundry (kg):</label>
+                <input type="number" id="quantity" placeholder="Masukkan jumlah">
+            </div>
+            <button class="btn" onclick="addOrder()">Tambah Pesanan</button>
+        </div>
+
+        <div class="card">
+            <h2>Daftar Pemesan</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Nama</th>
+                        <th>Nomor HP</th>
+                        <th>Alamat</th>
+                        <th>Jumlah (kg)</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="orderList">
+                    <!-- List Pemesan -->
+                </tbody>
+            </table>
+            <p class="note">Silahkan cetak file PDF pemesanan Anda lalu kirimkan ke WhatsApp pemilik laundry.</p>
+            <button class="btn" onclick="generatePDF()">Cetak PDF</button>
+            <button class="btn" onclick="sendOrderToWhatsApp()">Kirim ke WhatsApp</button>
+        </div>
+    </main>
+
+    <script>
+        // Global variable to hold orders
+        let orders = [];
+
+        // Function to add order to the list
+        function addOrder() {
+            let name = document.getElementById('name').value;
+            let phone = document.getElementById('phone').value;
+            let address = document.getElementById('address').value;
+            let quantity = document.getElementById('quantity').value;
+
+            if (name && phone && address && quantity) {
+                let order = {
+                    id: orders.length + 1,
+                    name,
+                    phone,
+                    address,
+                    quantity
+                };
+                orders.push(order);
+                displayOrders();
+                clearForm();
+            } else {
+                alert('Harap lengkapi semua data.');
+            }
+        }
+
+        // Function to display orders in the table
+        function displayOrders() {
+            let orderList = document.getElementById('orderList');
+            orderList.innerHTML = '';
+            orders.forEach(order => {
+                let row = `<tr>
+                    <td>${order.id}</td>
+                    <td>${order.name}</td>
+                    <td>${order.phone}</td>
+                    <td>${order.address}</td>
+                    <td>${order.quantity}</td>
+                    <td>
+                        <button class="btn" onclick="editOrder(${order.id})">Ubah</button>
+                        <button class="btn" onclick="deleteOrder(${order.id})">Hapus</button>
+                    </td>
+                </tr>`;
+                orderList.innerHTML += row;
+            });
+        }
+
+        // Function to clear the form inputs
+        function clearForm() {
+            document.getElementById('name').value = '';
+            document.getElementById('phone').value = '';
+            document.getElementById('address').value = '';
+            document.getElementById('quantity').value = '';
+        }
+
+        // Function to edit an order
+        function editOrder(id) {
+            let order = orders.find(order => order.id === id);
+            document.getElementById('name').value = order.name;
+            document.getElementById('phone').value = order.phone;
+            document.getElementById('address').value = order.address;
+            document.getElementById('quantity').value = order.quantity;
+            deleteOrder(id); // Delete the order before editing
+        }
+
+        // Function to delete an order
+        function deleteOrder(id) {
+            orders = orders.filter(order => order.id !== id);
+            displayOrders();
+        }
+
+        // Function to generate a PDF of the orders
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text("Daftar Pesanan Laundry", 10, 10);
+            orders.forEach((order, index) => {
+                doc.text(`Pesanan ${index + 1}: ${order.name}, ${order.phone}, ${order.address}, ${order.quantity} kg`, 10, 20 + (index * 10));
+            });
+            doc.save("pesanan_laundry.pdf");
+        }
+
+        // Function to send orders to WhatsApp
+        function sendOrderToWhatsApp() {
+            let message = "Daftar Pesanan Laundry:\n";
+            orders.forEach(order => {
+                message += `\nPesanan: ${order.name}, ${order.phone}, ${order.address}, ${order.quantity} kg`;
+            });
+            let whatsappUrl = `https://wa.me/6285941361577?text=${encodeURIComponent(message)}`;
+            window.open(whatsappUrl, '_blank');
+        }
+
+    </script>
+</body>
+</html>
